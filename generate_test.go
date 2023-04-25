@@ -13,7 +13,7 @@ func Test_Generate(t *testing.T) {
 		Email     string
 	}
 
-	newUser := User{Id: 1, FirstName: "John", LastName: "Doe", Email: "johndoe@example.com"}
+	newUser := &User{Id: 1, FirstName: "John", LastName: "Doe", Email: "johndoe@example.com"}
 	oldUser := User{Id: 1, FirstName: "Jane", LastName: "Doe", Email: "janedoe@example.com"}
 
 	sql, values, err := Generate("users", newUser, oldUser)
@@ -28,7 +28,7 @@ func Test_Generate(t *testing.T) {
 	// db : your sql=db provider
 
 	if sql != "UPDATE users SET FirstName=:FirstName, Email=:Email WHERE Id=:Id" {
-		t.Fatal()
+		t.Fatal(sql)
 	}
 
 	if !reflect.DeepEqual(values, map[string]interface{}{
