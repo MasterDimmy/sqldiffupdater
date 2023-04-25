@@ -83,7 +83,7 @@ func Generate(tableName string, key string, newvar_ interface{}, oldvar_ interfa
 		fieldName := field.Name
 
 		// Skip the Id field
-		if fieldName == "Id" {
+		if strings.ToLower(fieldName) == strings.ToLower(key) {
 			continue
 		}
 
