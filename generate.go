@@ -17,7 +17,9 @@ import (
 		sql string of "update tableName set ..... where tableName.Id = oldvar.Id"
 		map of key:value properties of newvar changes from oldvar
 		error if happens
-	If now changes found, map[string]interface{} has 0 len!
+	Notes:
+		If no changes found, map[string]interface{} has len of 1 (just Id)!
+		newvar should have "Id" property as primary key for update!
 */
 func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (string, map[string]interface{}, error) {
 	// Check if newvar is a pointer
