@@ -13,15 +13,16 @@ import (
 		tableName - database table to update
 		newvar	- new object
 		oldvar	- old object of same type
+		key - field name of the primary key in tableName
 	Result:
 		sql string of "update tableName set ..... where tableName.Id = oldvar.Id"
 		map of key:value properties of newvar changes from oldvar
 		error if happens
 	Notes:
 		If no changes found, map[string]interface{} has len of 1 (just Id)!
-		newvar should have "Id" property as primary key for update!
+		newvar should have key property as primary key for update!
 */
-func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (string, map[string]interface{}, error) {
+func Generate(tableName string, key string, newvar_ interface{}, oldvar_ interface{}) (string, map[string]interface{}, error) {
 	// Check if newvar is a pointer
 	newvar := newvar_
 	if reflect.TypeOf(newvar_).Kind() == reflect.Ptr {
@@ -53,7 +54,7 @@ func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (strin
 	}
 
 	// Get the primary key field
-	_, ok := newType.FieldByName("Id")
+	_, ok := newType.FieldByName(key)
 	if !ok {
 		return "", nil, fmt.Errorf("newvar and oldvar must have an 'Id' field")
 	}
@@ -94,11 +95,11 @@ func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (strin
 	}
 
 	// Construct the SQL query
-	sql := fmt.Sprintf("UPDATE %s SET %s WHERE Id=:Id", tableName, strings.Join(setValues, ", "))
+	sql := fmt.Sprintf("UPDATE %s SET %s WHERE %s=:%s", tableName, strings.Join(setValues, ", "), key, key)
 
 	// Add the Id value to the values map
-	idFieldValue := newValue.FieldByName("Id")
-	values["Id"] = idFieldValue.Interface()
+	idFieldValue := newValue.FieldByName(key)
+	values[key] = idFieldValue.Interface()
 
 	// Return the SQL query and the values map
 	return sql, values, nil
@@ -107,10 +108,10 @@ func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (strin
 //`update` is a Go function that generates SQL code for updating specific fields in
 // a database table based on a given object and a list of fields to update.
 // The function takes the table name, the object containing the new values,
-// and a list of fields to update. The object must have an `Id` field as a primary key.
+// and a list of fields to update. The object must have an key field as a primary key.
 // The function returns a tuple containing the SQL code for updating,
 // a map of updated fields and their values, and an error if one occurs.
-func Update(tableName string, newvar_ interface{}, fields []string) (string, map[string]interface{}, error) {
+func Update(tableName string, key string, newvar_ interface{}, fields []string) (string, map[string]interface{}, error) {
 	// Check if newobj is a pointer
 	newvar := newvar_
 	if reflect.TypeOf(newvar_).Kind() == reflect.Ptr {
@@ -118,9 +119,9 @@ func Update(tableName string, newvar_ interface{}, fields []string) (string, map
 	}
 
 	// Check that the object has an "Id" field
-	_, ok := reflect.TypeOf(newvar).FieldByName("Id")
+	_, ok := reflect.TypeOf(newvar).FieldByName(key)
 	if !ok {
-		return "", nil, fmt.Errorf("newvar must have an 'Id' field")
+		return "", nil, fmt.Errorf("newvar must have an " + key + " field")
 	}
 
 	// Get the values of the fields that have changed
@@ -136,10 +137,10 @@ func Update(tableName string, newvar_ interface{}, fields []string) (string, map
 	for _, field := range fields {
 		sql += fmt.Sprintf(" %s=:%s,", field, field)
 	}
-	sql = strings.TrimSuffix(sql, ",") + " WHERE Id=:Id"
+	sql = strings.TrimSuffix(sql, ",") + " WHERE " + key + "=:" + key
 
 	// Add the Id value to the values map
-	values["Id"] = newVal.FieldByName("Id").Interface()
+	values[key] = newVal.FieldByName(key).Interface()
 
 	return sql, values, nil
 }
