@@ -1,4 +1,4 @@
-package sdu
+package sqldiffupdater
 
 import (
 	"reflect"

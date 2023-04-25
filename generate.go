@@ -8,7 +8,19 @@ import (
 	"strings"
 )
 
-func Generate(tableName string, newvar interface{}, oldvar interface{}) (string, map[string]interface{}, error) {
+func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (string, map[string]interface{}, error) {
+	// Check if newvar is a pointer
+	newvar := newvar_
+	if reflect.TypeOf(newvar_).Kind() == reflect.Ptr {
+		newvar = reflect.ValueOf(newvar_).Elem().Interface()
+	}
+
+	// Check if oldvar is a pointer
+	oldvar := oldvar_
+	if reflect.TypeOf(oldvar_).Kind() == reflect.Ptr {
+		oldvar = reflect.ValueOf(oldvar_).Elem().Interface()
+	}
+
 	// Get the type of the new and old variables
 	newType := reflect.TypeOf(newvar)
 	oldType := reflect.TypeOf(oldvar)
@@ -85,7 +97,13 @@ func Generate(tableName string, newvar interface{}, oldvar interface{}) (string,
 // and a list of fields to update. The object must have an `Id` field as a primary key.
 // The function returns a tuple containing the SQL code for updating,
 // a map of updated fields and their values, and an error if one occurs.
-func Update(tableName string, newvar interface{}, fields []string) (string, map[string]interface{}, error) {
+func Update(tableName string, newvar_ interface{}, fields []string) (string, map[string]interface{}, error) {
+	// Check if newobj is a pointer
+	newvar := newvar_
+	if reflect.TypeOf(newvar_).Kind() == reflect.Ptr {
+		newvar = reflect.ValueOf(newvar_).Elem().Interface()
+	}
+
 	// Check that the object has an "Id" field
 	_, ok := reflect.TypeOf(newvar).FieldByName("Id")
 	if !ok {
