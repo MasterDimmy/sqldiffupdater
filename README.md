@@ -1,5 +1,8 @@
-## sqldiffupdater
-The `sqldiffupdater.Generate()` is a Golang function that generates an SQL update statement based on the comparison of the properties of two objects, `newvar` and `oldvar`. The function takes three arguments: `tableName`, `newvar`, and `oldvar`. 
+# sqldiffupdater
+
+## Function: `Generate`
+
+Generates an SQL update statement based on the comparison of the properties of two objects, `newvar` and `oldvar`. The function takes three arguments: `tableName`, `newvar`, and `oldvar`. 
 
 The `tableName` argument is a string that represents the name of the database table that the update statement will be executed against. The `newvar` and `oldvar` arguments are the new and old versions of the object that will be compared.
 
@@ -49,7 +52,7 @@ if err != nil {
 ```
 
 
-## Function: `update`
+## Function: `Update`
 
 Generates SQL code for updating specific fields in a database table based on a given object and a list of fields to update.
 
