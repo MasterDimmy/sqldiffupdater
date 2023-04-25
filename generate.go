@@ -8,6 +8,17 @@ import (
 	"strings"
 )
 
+/*
+	Parameters:
+		tableName - database table to update
+		newvar	- new object
+		oldvar	- old object of same type
+	Result:
+		sql string of "update tableName set ..... where tableName.Id = oldvar.Id"
+		map of key:value properties of newvar changes from oldvar
+		error if happens
+	If now changes found, map[string]interface{} has 0 len!
+*/
 func Generate(tableName string, newvar_ interface{}, oldvar_ interface{}) (string, map[string]interface{}, error) {
 	// Check if newvar is a pointer
 	newvar := newvar_
