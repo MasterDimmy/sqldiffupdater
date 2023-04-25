@@ -1,3 +1,3 @@
-module github.com/MasterDimmy/sqldiffupdater
+module sqldiffupdater
 
 go 1.20

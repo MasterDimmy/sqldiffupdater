@@ -78,3 +78,37 @@ func Generate(tableName string, newvar interface{}, oldvar interface{}) (string,
 	// Return the SQL query and the values map
 	return sql, values, nil
 }
+
+//`update` is a Go function that generates SQL code for updating specific fields in
+// a database table based on a given object and a list of fields to update.
+// The function takes the table name, the object containing the new values,
+// and a list of fields to update. The object must have an `Id` field as a primary key.
+// The function returns a tuple containing the SQL code for updating,
+// a map of updated fields and their values, and an error if one occurs.
+func Update(tableName string, newvar interface{}, fields []string) (string, map[string]interface{}, error) {
+	// Check that the object has an "Id" field
+	_, ok := reflect.TypeOf(newvar).FieldByName("Id")
+	if !ok {
+		return "", nil, fmt.Errorf("newvar must have an 'Id' field")
+	}
+
+	// Get the values of the fields that have changed
+	values := make(map[string]interface{})
+	newVal := reflect.ValueOf(newvar)
+	for _, field := range fields {
+		value := newVal.FieldByName(field).Interface()
+		values[field] = value
+	}
+
+	// Build the update SQL statement
+	sql := fmt.Sprintf("UPDATE %s SET", tableName)
+	for _, field := range fields {
+		sql += fmt.Sprintf(" %s=:%s,", field, field)
+	}
+	sql = strings.TrimSuffix(sql, ",") + " WHERE Id=:Id"
+
+	// Add the Id value to the values map
+	values["Id"] = newVal.FieldByName("Id").Interface()
+
+	return sql, values, nil
+}
