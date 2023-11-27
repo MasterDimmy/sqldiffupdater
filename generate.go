@@ -9,18 +9,23 @@ import (
 )
 
 /*
-	Parameters:
-		tableName - database table to update
-		newvar	- new object
-		oldvar	- old object of same type
-		key - field name of the primary key in tableName
-	Result:
-		sql string of "update tableName set ..... where tableName.Id = oldvar.Id"
-		map of key:value properties of newvar changes from oldvar
-		error if happens
-	Notes:
-		If no changes found, map[string]interface{} has len of 1 (just Id)!
-		newvar should have key property as primary key for update!
+Parameters:
+
+	tableName - database table to update
+	newvar	- new object
+	oldvar	- old object of same type
+	key - field name of the primary key in tableName
+
+Result:
+
+	sql string of "update tableName set ..... where tableName.Id = oldvar.Id"
+	map of key:value properties of newvar changes from oldvar
+	error if happens
+
+Notes:
+
+	If no changes found, map[string]interface{} has len of 1 (just Id)!
+	newvar should have key property as primary key for update!
 */
 func Generate(tableName string, key string, newvar_ interface{}, oldvar_ interface{}) (string, map[string]interface{}, error) {
 	// Check if newvar is a pointer
@@ -62,37 +67,8 @@ func Generate(tableName string, key string, newvar_ interface{}, oldvar_ interfa
 	// Check each field of the struct for differences
 	var setValues []string
 	values := make(map[string]interface{})
-	for i := 0; i < newType.NumField(); i++ {
-		field := newType.Field(i)
 
-		// Skip unexported fields
-		if field.PkgPath != "" {
-			continue
-		}
-
-		// Get the values of the field in the new and old variables
-		newFieldValue := newValue.Field(i)
-		oldFieldValue := oldValue.Field(i)
-
-		// Skip fields that are equal
-		if reflect.DeepEqual(newFieldValue.Interface(), oldFieldValue.Interface()) {
-			continue
-		}
-
-		// Get the name of the field
-		fieldName := field.Name
-
-		// Skip the Id field
-		if strings.ToLower(fieldName) == strings.ToLower(key) {
-			continue
-		}
-
-		// Add the field to the setValues slice
-		setValues = append(setValues, fmt.Sprintf("%s=:%s", fieldName, fieldName))
-
-		// Add the value to the values map
-		values[fieldName] = newFieldValue.Interface()
-	}
+	compareFields(newValue, oldValue, reflect.TypeOf(newvar), &setValues, values)
 
 	// Construct the SQL query
 	sql := fmt.Sprintf("UPDATE %s SET %s WHERE %s=:%s", tableName, strings.Join(setValues, ", "), key, key)
@@ -105,7 +81,7 @@ func Generate(tableName string, key string, newvar_ interface{}, oldvar_ interfa
 	return sql, values, nil
 }
 
-//`update` is a Go function that generates SQL code for updating specific fields in
+// `update` is a Go function that generates SQL code for updating specific fields in
 // a database table based on a given object and a list of fields to update.
 // The function takes the table name, the object containing the new values,
 // and a list of fields to update. The object must have an key field as a primary key.
@@ -143,4 +119,31 @@ func Update(tableName string, key string, newvar_ interface{}, fields []string) 
 	values[key] = newVal.FieldByName(key).Interface()
 
 	return sql, values, nil
+}
+
+func compareFields(newVal, oldVal reflect.Value, newType reflect.Type, setValues *[]string, values map[string]interface{}) {
+	for i := 0; i < newVal.NumField(); i++ {
+		field := newType.Field(i)
+
+		// Skip unexported fields
+		if field.PkgPath != "" {
+			continue
+		}
+
+		// Handle nested structures
+		if field.Type.Kind() == reflect.Struct {
+			compareFields(newVal.Field(i), oldVal.Field(i), field.Type, setValues, values)
+			continue
+		}
+
+		// Compare field values
+		newFieldValue := newVal.Field(i)
+		oldFieldValue := oldVal.Field(i)
+
+		if !reflect.DeepEqual(newFieldValue.Interface(), oldFieldValue.Interface()) {
+			fieldName := field.Name
+			*setValues = append(*setValues, fmt.Sprintf("%s=:%s", fieldName, fieldName))
+			values[fieldName] = newFieldValue.Interface()
+		}
+	}
 }
